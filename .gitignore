@@ -192,3 +192,120 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Machine Learning specific patterns
+# Model files and weights
+*.pth
+*.pt
+*.onnx
+*.h5
+*.hdf5
+*.pickle
+*.pkl
+*.joblib
+*.model
+*.ckpt
+*.safetensors
+
+# Training artifacts
+checkpoints/
+weights/
+saved_models/
+lightning_logs/
+wandb/
+mlruns/
+mlartifacts/
+tensorboard/
+runs/
+logs/
+
+# Data files (uncomment if you don't want to track large datasets)
+# *.csv
+# *.json
+# *.xml
+# *.parquet
+# data/
+# datasets/
+
+# Large media files (videos, images, audio)
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.flv
+*.wmv
+*.webm
+*.m4v
+*.3gp
+*.mp3
+*.wav
+*.flac
+*.aac
+*.ogg
+*.wma
+*.m4a
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.tif
+*.svg
+*.webp
+*.ico
+
+# Compressed files
+*.zip
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.rar
+*.7z
+*.gz
+*.bz2
+*.xz
+
+# Output and results directories
+output/
+outputs/
+results/
+predictions/
+experiments/
+inference/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Cache directories
+.cache/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+
+# Configuration files with sensitive data (uncomment if needed)
+# config.py
+# settings.py
+# secrets.py
+# .env.local
+# .env.production
