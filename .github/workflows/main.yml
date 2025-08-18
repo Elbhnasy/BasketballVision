@@ -2,7 +2,7 @@ name: BasketBall Vision Workflow
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   get-job:
