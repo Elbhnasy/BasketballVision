@@ -1,0 +1,14 @@
+name: BasketBall Vision Workflow
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  get-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+      - name: List Files
+        run: ls -la
