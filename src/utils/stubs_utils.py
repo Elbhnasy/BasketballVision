@@ -5,7 +5,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def save_stub(stub_path, obj):
+def save_stub(stub_path:str, obj:object) -> None:
     """
     Save a Python object to disk using PyTorch's optimized serialization.
     Creates necessary directories if they don't exist.
@@ -23,7 +23,7 @@ def save_stub(stub_path, obj):
 
 
 
-def read_stub(read_from_stub, stub_path, map_location="cpu"):
+def read_stub(read_from_stub:bool, stub_path:str, map_location:str="cpu") -> object:
     """
     Read a previously saved Python object from disk using PyTorch's loader.
     Args:

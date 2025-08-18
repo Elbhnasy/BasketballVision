@@ -14,7 +14,7 @@ class PlayerTracker:
     Detect and track 'Player' objects across video frames using YOLO + ByteTrack.
     """
 
-    def __init__(self, model_path, batch_size=20, device='cpu'):
+    def __init__(self, model_path:str, batch_size:int=20, device:str='cpu')->None:
         """
         Args:
             model_path (str): Path to YOLO weights.
@@ -31,7 +31,7 @@ class PlayerTracker:
         self.batch_size = batch_size
         self.device = device
 
-    def detect_frames(self, frames, conf=0.5):
+    def detect_frames(self, frames:list, conf:float=0.5) -> list:
         """
         Batched detection for efficiency.
         """
@@ -45,7 +45,7 @@ class PlayerTracker:
             
         return detections
 
-    def get_object_tracks(self, frames, read_from_stub=False, stub_path=None):
+    def get_object_tracks(self, frames:list, read_from_stub:bool=False, stub_path:str=None) -> list[dict]:
         """
         Run detection + tracking with optional caching.
 
