@@ -1,5 +1,6 @@
 from utils import read_video, save_video
 from trackers import PlayerTracker
+from drawers import PlayerTracksDrawer
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -12,19 +13,31 @@ def main():
     model_path = "/home/elbahnasy/CodingWorkspace/BasketballVision/src/models/player_detector.pt"
     stub_path = "/home/elbahnasy/CodingWorkspace/BasketballVision/src/stubs/track_stub.pkl"
 
-    # Read video frames
+    logger.info("Reading video from %s", video_path)
     frames = read_video(video_path)
+    logger.info("Loaded %d frames", len(frames))
 
-    # Initialize player tracker (force CPU usage due to GPU compatibility)
+    logger.info("Initializing player tracker...")
     tracker = PlayerTracker(model_path=model_path, device='cpu')
 
-    # Get object tracks
-    player_tracks = tracker.get_object_tracks(frames,
-                                        read_from_stub=True,
-                                        stub_path=stub_path)
-    logging.info(f"Player tracks: {player_tracks}")
+    logger.info("Getting player tracks...")
+    player_tracks = tracker.get_object_tracks(
+        frames,
+        read_from_stub=True,
+        stub_path=stub_path
+    )
+    logger.info("Tracks loaded.")
 
-    save_video(frames, output_path)
+    logger.info("Drawing player tracks on frames (batch mode)...")
+    player_tracks_drawer = PlayerTracksDrawer()
+    annotated_frames = player_tracks_drawer.draw_batch(
+        video_frames=frames,
+        tracks_batch=player_tracks
+    )
+
+    logger.info("Saving annotated video to %s", output_path)
+    save_video(annotated_frames, output_path)
+    logger.info("Processing complete.")
 
 if __name__ == "__main__":
     main()
