@@ -35,7 +35,6 @@ def main():
         tracks_batch=player_tracks
     )
 
-    logger.info("Saving annotated video to %s", output_path)
     save_video(annotated_frames, output_path)
     logger.info("Processing complete.")
 
