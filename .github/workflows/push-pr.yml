@@ -45,3 +45,4 @@ jobs:
             uv run pytest tests/ -v
           else
             echo "No tests directory found - skipping tests"
+          fi
