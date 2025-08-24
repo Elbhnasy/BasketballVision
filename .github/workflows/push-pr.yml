@@ -1,0 +1,50 @@
+name: Push and PR
+
+on:
+  push:
+    branches:
+      - master
+      - "dev/**"
+    paths:
+      - "src/**"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "src/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.13'
+      
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+          uv add ultralytics supervision opencv-python
+
+      - name: Run linting
+        run: |
+          uv run ruff check src/
+          uv run black --check src/
+      
+      - name: Run tests
+        run: |
+          if [ -d "tests" ]; then
+            uv run pytest tests/ -v
+          else
+            echo "No tests directory found - skipping tests"
+          fi
+        

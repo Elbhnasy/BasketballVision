@@ -14,3 +14,8 @@ dependencies = [
     "torchcodec>=0.6.0",
     "ultralytics>=8.3.179",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
