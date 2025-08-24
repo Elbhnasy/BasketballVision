@@ -23,7 +23,6 @@ def main():
         "/home/elbahnasy/CodingWorkspace/BasketballVision/src/stubs/track_stub.pkl"
     )
 
-    logger.info("Reading video from %s", video_path)
     frames = read_video(video_path)
     logger.info("Loaded %d frames", len(frames))
 
