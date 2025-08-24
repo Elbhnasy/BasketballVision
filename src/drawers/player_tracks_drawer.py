@@ -5,6 +5,7 @@ from .utils import draw_ellipse
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class PlayerTracksDrawer:
     """
     Draws player tracks on batches of video frames.
@@ -55,9 +56,11 @@ class PlayerTracksDrawer:
             raise ValueError("Input lists must have the same length.")
 
         output_frames = []
-        append_frame = output_frames.append  
-        
-        for frame_idx, (frame, player_dict) in enumerate(zip(video_frames, tracks_batch)):
+        append_frame = output_frames.append
+
+        for frame_idx, (frame, player_dict) in enumerate(
+            zip(video_frames, tracks_batch)
+        ):
             frame_copy = frame.copy()
 
             # Get player assignment for this frame
@@ -75,7 +78,9 @@ class PlayerTracksDrawer:
                 if track_id in assignment:
                     team_id = assignment[track_id]
                 else:
-                    team_id = 1 if track_id % 2 == 1 else 2  # Odd IDs = team 1, Even IDs = team 2
+                    team_id = (
+                        1 if track_id % 2 == 1 else 2
+                    )  # Odd IDs = team 1, Even IDs = team 2
 
                 color = self.team_1_color if team_id == 1 else self.team_2_color
 

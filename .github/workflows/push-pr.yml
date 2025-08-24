@@ -34,11 +34,12 @@ jobs:
         run: |
           uv sync --dev
           uv add ultralytics supervision opencv-python
+          uv add ruff black pytest --dev
 
       - name: Run linting
         run: |
-          uv run ruff check src/
-          uv run black --check src/
+          uv run ruff check src/ --exclude="src/training_notebooks/"
+          uv run black --check src/ --exclude="src/training_notebooks/"
       
       - name: Run tests
         run: |

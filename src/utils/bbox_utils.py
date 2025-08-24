@@ -23,6 +23,7 @@ def get_bbox_width(bbox: tuple) -> int:
     """
     return bbox[2] - bbox[0]
 
+
 def get_foot_position(bbox: tuple) -> tuple:
     """
     Calculate the foot position based on the bounding box.
@@ -33,4 +34,4 @@ def get_foot_position(bbox: tuple) -> tuple:
     Returns:
         tuple: A tuple containing the foot position (x_foot, y_foot).
     """
-    return (bbox[0],bbox[2]//2),int(bbox[3])
+    return (bbox[0], bbox[2] // 2), int(bbox[3])

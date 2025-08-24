@@ -1,5 +1,4 @@
 import os
-import torch
 import logging
 from ultralytics import YOLO
 import supervision as sv
@@ -14,7 +13,9 @@ class PlayerTracker:
     Detect and track 'Player' objects across video frames using YOLO + ByteTrack.
     """
 
-    def __init__(self, model_path:str, batch_size:int=20, device:str='cpu')->None:
+    def __init__(
+        self, model_path: str, batch_size: int = 20, device: str = "cpu"
+    ) -> None:
         """
         Args:
             model_path (str): Path to YOLO weights.
@@ -24,28 +25,30 @@ class PlayerTracker:
         if not os.path.exists(model_path):
             logger.error(f"Model file not found: {model_path}")
             raise FileNotFoundError(f"Model file not found: {model_path}")
-            
+
         self.model = YOLO(model_path)
         self.model.to(device)
         self.tracker = sv.ByteTrack()
         self.batch_size = batch_size
         self.device = device
 
-    def detect_frames(self, frames:list, conf:float=0.5) -> list:
+    def detect_frames(self, frames: list, conf: float = 0.5) -> list:
         """
         Batched detection for efficiency.
         """
         logger.info(f"Detecting players in {len(frames)} frames")
-        
+
         detections = []
         for i in range(0, len(frames), self.batch_size):
-            batch_frames = frames[i:i + self.batch_size]
+            batch_frames = frames[i : i + self.batch_size]
             detections_batch = self.model(batch_frames, conf=conf, verbose=False)
             detections.extend(detections_batch)
-            
+
         return detections
 
-    def get_object_tracks(self, frames:list, read_from_stub:bool=False, stub_path:str=None) -> list[dict]:
+    def get_object_tracks(
+        self, frames: list, read_from_stub: bool = False, stub_path: str = None
+    ) -> list[dict]:
         """
         Run detection + tracking with optional caching.
 
@@ -70,8 +73,8 @@ class PlayerTracker:
             detection_sv = sv.Detections.from_ultralytics(detection)
 
             # Filter for 'Player' class before tracking
-            if 'Player' in cls_names_inv:
-                player_class_id = cls_names_inv['Player']
+            if "Player" in cls_names_inv:
+                player_class_id = cls_names_inv["Player"]
                 detection_sv = detection_sv[detection_sv.class_id == player_class_id]
 
             tracked = self.tracker.update_with_detections(detection_sv)
