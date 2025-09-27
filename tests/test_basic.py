@@ -64,3 +64,101 @@ class TestBasicFunctionality:
         assert frames[0].max() == 0
         assert frames[1].max() == 50
         assert frames[2].max() == 100
+    
+    def test_numpy_array_operations(self):
+        """Test basic numpy operations for video processing."""
+        # Test array creation and manipulation
+        frame = np.zeros((240, 320, 3), dtype=np.uint8)
+        assert frame.shape == (240, 320, 3)
+        assert frame.sum() == 0
+        
+        # Test frame modification
+        frame[100:140, 160:200] = [255, 0, 0]  # Red rectangle
+        assert frame[120, 180, 0] == 255  # Red channel
+        assert frame[120, 180, 1] == 0    # Green channel
+        assert frame[120, 180, 2] == 0    # Blue channel
+    
+    def test_frame_copying_and_modification(self):
+        """Test frame copying to avoid modifying originals."""
+        original = np.ones((50, 50, 3), dtype=np.uint8) * 100
+        copy = original.copy()
+        
+        # Modify the copy
+        copy[25, 25] = [255, 255, 255]
+        
+        # Original should be unchanged
+        assert np.all(original[25, 25] == [100, 100, 100])
+        assert np.all(copy[25, 25] == [255, 255, 255])
+    
+    def test_batch_processing_simulation(self):
+        """Test batch processing of frames."""
+        batch_size = 5
+        total_frames = 12
+        
+        # Simulate processing frames in batches
+        frames = [np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8) 
+                 for _ in range(total_frames)]
+        
+        processed_frames = []
+        for i in range(0, len(frames), batch_size):
+            batch = frames[i:i + batch_size]
+            # Simulate some processing (just copy here)
+            processed_batch = [frame.copy() for frame in batch]
+            processed_frames.extend(processed_batch)
+        
+        assert len(processed_frames) == total_frames
+        assert all(frame.shape == (100, 100, 3) for frame in processed_frames)
+
+
+class TestImportValidation:
+    """Tests to validate that required modules can be imported."""
+    
+    def test_import_trackers(self):
+        """Test that tracker modules can be imported."""
+        try:
+            from trackers.ball_tracker import BallTracker
+            from trackers.player_tracker import PlayerTracker
+            assert BallTracker is not None
+            assert PlayerTracker is not None
+        except ImportError as e:
+            pytest.fail(f"Failed to import tracker modules: {e}")
+    
+    def test_import_drawers(self):
+        """Test that drawer modules can be imported."""
+        try:
+            from drawers.ball_tracks_drawer import BallTracksDrawer
+            from drawers.player_tracks_drawer import PlayerTracksDrawer
+            assert BallTracksDrawer is not None
+            assert PlayerTracksDrawer is not None
+        except ImportError as e:
+            pytest.fail(f"Failed to import drawer modules: {e}")
+    
+    def test_import_utils(self):
+        """Test that utility modules can be imported."""
+        try:
+            from utils.bbox_utils import get_bbox_center, get_bbox_width, get_foot_position
+            from utils.stubs_utils import save_stub, read_stub
+            assert callable(get_bbox_center)
+            assert callable(get_bbox_width)
+            assert callable(get_foot_position)
+            assert callable(save_stub)
+            assert callable(read_stub)
+        except ImportError as e:
+            pytest.fail(f"Failed to import utility modules: {e}")
+    
+    def test_external_dependencies(self):
+        """Test that external dependencies are available."""
+        try:
+            import torch
+            import pandas as pd
+            from ultralytics import YOLO
+            import supervision as sv
+            
+            # Basic functionality tests
+            assert hasattr(torch, 'save')
+            assert hasattr(torch, 'load')
+            assert hasattr(pd, 'DataFrame')
+            assert YOLO is not None
+            assert hasattr(sv, 'ByteTrack')
+        except ImportError as e:
+            pytest.fail(f"Required external dependency not available: {e}")
