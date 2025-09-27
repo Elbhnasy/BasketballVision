@@ -1,5 +1,7 @@
 import os
 import logging
+import numpy as np
+import pandas as pd
 from ultralytics import YOLO
 import supervision as sv
 from typing import List, Dict, Any
@@ -54,51 +56,53 @@ class BallTracker:
         return detections
     
     def get_object_tracks(
-        self, frames: list, read_from_stub: bool = False, stub_path: str = None
-    ) -> list[dict]:
+        self, frames: List[Any], read_from_stub: bool = False, stub_path: str = None
+    ) -> List[Dict]:
         """
         Run detection + tracking with optional caching.
 
         Returns:
             list[dict]: One dict per frame mapping track_id -> bbox.
         """
-
         tracks = read_stub(read_from_stub, stub_path)
         if tracks is not None and len(tracks) == len(frames):
             logger.info(f"Loaded tracks from cache: {stub_path}")
             return tracks
 
-        logger.info("Running player detection and tracking...")
+        if len(frames) == 0:
+            return [{}] * len(frames)
+
+        # Determine ball class ID once
+        sample_detection = self.model(frames[0:1], verbose=False)
+        ball_class_id = next((k for k, v in sample_detection[0].names.items() if v == "Ball"), None)
+        if ball_class_id is None:
+            logger.warning("No 'Ball' class found in model names")
+            return [{}] * len(frames)
+
         detections = self.detect_frames(frames)
         tracks = []
 
-        for frame_num, detection in enumerate(detections):
-            # Convert to Supervision format
+        for detection in detections:
             detection_sv = sv.Detections.from_ultralytics(detection)
+            tracks.append({})
 
-            tracks.append({}) 
-            chosen_bbox = None
-            max_conf = 0.0
-            for frame_detection in detection_sv:
-                bbox = frame_detection[0].tolist()
-                confidence = frame_detection[2]
-                cls_id = int(frame_detection[3])
+            if len(detection_sv) == 0 or ball_class_id not in detection_sv.class_id:
+                continue
 
-                # Check if this detection is a ball using the class ID
-                if cls_id in detection.names and detection.names[cls_id] == "Ball":
-                    if confidence > max_conf:
-                        max_conf = confidence
-                        chosen_bbox = bbox
+            ball_mask = detection_sv.class_id == ball_class_id
+            if ball_mask.any():
+                ball_confs = detection_sv.confidence[ball_mask]
+                max_idx = np.argmax(ball_confs)
+                chosen_bbox = detection_sv.xyxy[ball_mask][max_idx].tolist()
+                tracks[-1][1] = {"bbox": chosen_bbox}
 
-            if chosen_bbox is not None:
-                tracks[frame_num][1] = {"bbox": chosen_bbox}
         if stub_path is not None:
             save_stub(stub_path, tracks)
         return tracks
             
     def remove_wrong_detections(self, ball_positions: List[Dict[int, Dict[str, Any]]]) -> List[Dict[int, Dict[str, Any]]]:
         """
-        Remove wrong ball detections based on position and size criteria.
+        Remove wrong ball detections based on position criteria (temporal consistency check).
 
         Args:
             ball_positions (List[Dict[int, Dict[str, Any]]]): List of dicts mapping track_id -> ball data (must include "bbox").
@@ -106,13 +110,14 @@ class BallTracker:
         Returns:
             List[Dict[int, Dict[str, Any]]]: Filtered list of ball positions.
         """
-        maximum_allowed_distance = 25
+        logger.info("Removing wrong ball detections...")
+        maximum_allowed_distance = 25  # Pixels per frame; tunable for basketball speed
         last_good_frame_index = -1
 
         for i in range(len(ball_positions)):
             current_box = ball_positions[i].get(1, {}).get('bbox', [])
 
-            if len(current_box) == 0:
+            if len(current_box) != 4:  # Ensure valid bbox
                 continue
 
             if last_good_frame_index == -1:
@@ -121,14 +126,23 @@ class BallTracker:
                 continue
 
             last_good_box = ball_positions[last_good_frame_index].get(1, {}).get('bbox', [])
+            if len(last_good_box) != 4:
+                continue
+
             frame_gap = i - last_good_frame_index
             adjusted_max_distance = maximum_allowed_distance * frame_gap
 
-            if np.linalg.norm(np.array(last_good_box[:2]) - np.array(current_box[:2])) > adjusted_max_distance:
-                ball_positions[i] = {}
+            # Compare top-left corners for position jump
+            distance = np.linalg.norm(
+                np.array(last_good_box[:2]) - np.array(current_box[:2])
+            )
+
+            if distance > adjusted_max_distance:
+                ball_positions[i] = {}  # Discard invalid detection
             else:
                 last_good_frame_index = i
 
+        logger.info("Wrong ball detections removed.")
         return ball_positions
 
     def interpolate_missing_detections(self, ball_positions: List[Dict[int, Dict[str, Any]]]) -> List[Dict[int, Dict[str, Any]]]:
@@ -136,17 +150,28 @@ class BallTracker:
         Interpolate missing ball detections to create a smoother trajectory.
 
         Args:
-            ball_position (List[Dict[int, Dict[str, Any]]]): List of dicts mapping track_id -> ball data (must include "bbox").
+            ball_positions (List[Dict[int, Dict[str, Any]]]): List of dicts mapping track_id -> ball data (must include "bbox").
 
         Returns:
             List[Dict[int, Dict[str, Any]]]: List of ball positions with interpolated values.
         """
-        ball_positions = [x.get(1,{}).get('bbox',[]) for x in ball_positions]
-        df_ball_positions = pd.DataFrame(ball_positions,columns=['x1','y1','x2','y2'])
-
-        # Interpolate missing values
-        df_ball_positions = df_ball_positions.interpolate()
-        df_ball_positions = df_ball_positions.bfill()
-
-        ball_positions = [{1: {"bbox":x}} for x in df_ball_positions.to_numpy().tolist()]
-        return ball_positions
+        logger.info("Interpolating missing ball detections...")
+        # Extract bboxes as list of [x1, y1, x2, y2] or []
+        raw_bboxes = [pos.get(1, {}).get('bbox', []) for pos in ball_positions]
+        
+        # Create DataFrame; empty lists become NaN rows
+        df = pd.DataFrame(raw_bboxes, columns=['x1', 'y1', 'x2', 'y2'])
+        
+        # Forward fill any leading NaNs, then linear interpolate, then backward fill trailing
+        df = df.ffill().interpolate(method='linear').bfill()
+        
+        # Reconstruct positions
+        interpolated_positions = []
+        for row in df.to_numpy():
+            if np.isnan(row).any():
+                interpolated_positions.append({})  # Still invalid if all NaN
+            else:
+                interpolated_positions.append({1: {"bbox": row.tolist()}})
+        
+        logger.info("Missing ball detections interpolated.")
+        return interpolated_positions
