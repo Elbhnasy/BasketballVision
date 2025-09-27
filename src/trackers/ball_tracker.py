@@ -96,3 +96,57 @@ class BallTracker:
             save_stub(stub_path, tracks)
         return tracks
             
+    def remove_wrong_detections(self, ball_positions: List[Dict[int, Dict[str, Any]]]) -> List[Dict[int, Dict[str, Any]]]:
+        """
+        Remove wrong ball detections based on position and size criteria.
+
+        Args:
+            ball_positions (List[Dict[int, Dict[str, Any]]]): List of dicts mapping track_id -> ball data (must include "bbox").
+
+        Returns:
+            List[Dict[int, Dict[str, Any]]]: Filtered list of ball positions.
+        """
+        maximum_allowed_distance = 25
+        last_good_frame_index = -1
+
+        for i in range(len(ball_positions)):
+            current_box = ball_positions[i].get(1, {}).get('bbox', [])
+
+            if len(current_box) == 0:
+                continue
+
+            if last_good_frame_index == -1:
+                # First valid detection
+                last_good_frame_index = i
+                continue
+
+            last_good_box = ball_positions[last_good_frame_index].get(1, {}).get('bbox', [])
+            frame_gap = i - last_good_frame_index
+            adjusted_max_distance = maximum_allowed_distance * frame_gap
+
+            if np.linalg.norm(np.array(last_good_box[:2]) - np.array(current_box[:2])) > adjusted_max_distance:
+                ball_positions[i] = {}
+            else:
+                last_good_frame_index = i
+
+        return ball_positions
+
+    def interpolate_missing_detections(self, ball_positions: List[Dict[int, Dict[str, Any]]]) -> List[Dict[int, Dict[str, Any]]]:
+        """
+        Interpolate missing ball detections to create a smoother trajectory.
+
+        Args:
+            ball_position (List[Dict[int, Dict[str, Any]]]): List of dicts mapping track_id -> ball data (must include "bbox").
+
+        Returns:
+            List[Dict[int, Dict[str, Any]]]: List of ball positions with interpolated values.
+        """
+        ball_positions = [x.get(1,{}).get('bbox',[]) for x in ball_positions]
+        df_ball_positions = pd.DataFrame(ball_positions,columns=['x1','y1','x2','y2'])
+
+        # Interpolate missing values
+        df_ball_positions = df_ball_positions.interpolate()
+        df_ball_positions = df_ball_positions.bfill()
+
+        ball_positions = [{1: {"bbox":x}} for x in df_ball_positions.to_numpy().tolist()]
+        return ball_positions
