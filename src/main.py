@@ -1,9 +1,6 @@
 from utils import read_video, save_video
 from trackers import PlayerTracker, BallTracker
-from drawers import (
-    PlayerTracksDrawer,
-    BallTracksDrawer
-)
+from drawers import PlayerTracksDrawer, BallTracksDrawer
 
 import logging
 
@@ -23,12 +20,8 @@ def main():
     players_model_path = (
         "/home/elbahnasy/CodingWorkspace/BasketballVision/src/models/player_detector.pt"
     )
-    ball_model_path = (
-        "/home/elbahnasy/CodingWorkspace/BasketballVision/src/models/ball_detector_model.pt"
-    )
-    player_stub_path = (
-        "/home/elbahnasy/CodingWorkspace/BasketballVision/src/stubs/player_track_stub.pkl"
-    )
+    ball_model_path = "/home/elbahnasy/CodingWorkspace/BasketballVision/src/models/ball_detector_model.pt"
+    player_stub_path = "/home/elbahnasy/CodingWorkspace/BasketballVision/src/stubs/player_track_stub.pkl"
     ball_stub_path = (
         "/home/elbahnasy/CodingWorkspace/BasketballVision/src/stubs/ball_track_stub.pkl"
     )

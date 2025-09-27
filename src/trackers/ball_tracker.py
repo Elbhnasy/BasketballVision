@@ -51,10 +51,10 @@ class BallTracker:
         """
         detections = []
         for i in range(0, len(frames), self.batch_size):
-            batch = frames[i:i + self.batch_size]
+            batch = frames[i : i + self.batch_size]
             detections.extend(self.model(batch, conf=conf))
         return detections
-    
+
     def get_object_tracks(
         self, frames: List[Any], read_from_stub: bool = False, stub_path: str = None
     ) -> List[Dict]:
@@ -74,7 +74,9 @@ class BallTracker:
 
         # Determine ball class ID once
         sample_detection = self.model(frames[0:1], verbose=False)
-        ball_class_id = next((k for k, v in sample_detection[0].names.items() if v == "Ball"), None)
+        ball_class_id = next(
+            (k for k, v in sample_detection[0].names.items() if v == "Ball"), None
+        )
         if ball_class_id is None:
             logger.warning("No 'Ball' class found in model names")
             return [{}] * len(frames)
@@ -99,8 +101,10 @@ class BallTracker:
         if stub_path is not None:
             save_stub(stub_path, tracks)
         return tracks
-            
-    def remove_wrong_detections(self, ball_positions: List[Dict[int, Dict[str, Any]]]) -> List[Dict[int, Dict[str, Any]]]:
+
+    def remove_wrong_detections(
+        self, ball_positions: List[Dict[int, Dict[str, Any]]]
+    ) -> List[Dict[int, Dict[str, Any]]]:
         """
         Remove wrong ball detections based on position criteria (temporal consistency check).
 
@@ -115,7 +119,7 @@ class BallTracker:
         last_good_frame_index = -1
 
         for i in range(len(ball_positions)):
-            current_box = ball_positions[i].get(1, {}).get('bbox', [])
+            current_box = ball_positions[i].get(1, {}).get("bbox", [])
 
             if len(current_box) != 4:  # Ensure valid bbox
                 continue
@@ -125,7 +129,9 @@ class BallTracker:
                 last_good_frame_index = i
                 continue
 
-            last_good_box = ball_positions[last_good_frame_index].get(1, {}).get('bbox', [])
+            last_good_box = (
+                ball_positions[last_good_frame_index].get(1, {}).get("bbox", [])
+            )
             if len(last_good_box) != 4:
                 continue
 
@@ -145,7 +151,9 @@ class BallTracker:
         logger.info("Wrong ball detections removed.")
         return ball_positions
 
-    def interpolate_missing_detections(self, ball_positions: List[Dict[int, Dict[str, Any]]]) -> List[Dict[int, Dict[str, Any]]]:
+    def interpolate_missing_detections(
+        self, ball_positions: List[Dict[int, Dict[str, Any]]]
+    ) -> List[Dict[int, Dict[str, Any]]]:
         """
         Interpolate missing ball detections to create a smoother trajectory.
 
@@ -157,14 +165,14 @@ class BallTracker:
         """
         logger.info("Interpolating missing ball detections...")
         # Extract bboxes as list of [x1, y1, x2, y2] or []
-        raw_bboxes = [pos.get(1, {}).get('bbox', []) for pos in ball_positions]
-        
+        raw_bboxes = [pos.get(1, {}).get("bbox", []) for pos in ball_positions]
+
         # Create DataFrame; empty lists become NaN rows
-        df = pd.DataFrame(raw_bboxes, columns=['x1', 'y1', 'x2', 'y2'])
-        
+        df = pd.DataFrame(raw_bboxes, columns=["x1", "y1", "x2", "y2"])
+
         # Forward fill any leading NaNs, then linear interpolate, then backward fill trailing
-        df = df.ffill().interpolate(method='linear').bfill()
-        
+        df = df.ffill().interpolate(method="linear").bfill()
+
         # Reconstruct positions
         interpolated_positions = []
         for row in df.to_numpy():
@@ -172,6 +180,6 @@ class BallTracker:
                 interpolated_positions.append({})  # Still invalid if all NaN
             else:
                 interpolated_positions.append({1: {"bbox": row.tolist()}})
-        
+
         logger.info("Missing ball detections interpolated.")
         return interpolated_positions

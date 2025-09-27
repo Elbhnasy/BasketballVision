@@ -50,9 +50,7 @@ class BallTracksDrawer:
         append_frame = output_frames.append
         total_balls_drawn = 0
 
-        for frame_idx, (frame, ball_dict) in enumerate(
-            zip(video_frames, tracks_batch)
-        ):
+        for frame_idx, (frame, ball_dict) in enumerate(zip(video_frames, tracks_batch)):
             frame_copy = frame.copy()
             balls_drawn = 0
 
@@ -67,7 +65,11 @@ class BallTracksDrawer:
             total_balls_drawn += balls_drawn
             append_frame(frame_copy)
 
-            logger.debug(f"Processed frame {frame_idx}: drew {balls_drawn} ball pointers.")
+            logger.debug(
+                f"Processed frame {frame_idx}: drew {balls_drawn} ball pointers."
+            )
 
-        logger.info(f"Completed drawing on {len(output_frames)} frames, total balls drawn: {total_balls_drawn}.")
+        logger.info(
+            f"Completed drawing on {len(output_frames)} frames, total balls drawn: {total_balls_drawn}."
+        )
         return output_frames

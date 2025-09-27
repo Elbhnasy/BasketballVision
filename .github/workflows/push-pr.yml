@@ -39,6 +39,10 @@ jobs:
           uv add ultralytics supervision opencv-python
           uv add ruff black pytest pytest-cov --dev
 
+      - name: Format code with Black
+        run: |
+          uv run black src/ --exclude=src/training_notebooks/
+      
       - name: Run linting
         run: |
           uv run ruff check src/ --exclude=src/training_notebooks/
