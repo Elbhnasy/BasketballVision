@@ -1,0 +1,3 @@
+# Keep this directory in git
+# This directory contains input video files for processing
+# Video files (*.mp4, *.avi, etc.) are excluded by .gitignore due to size

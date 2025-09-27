@@ -43,6 +43,14 @@ jobs:
         run: |
           uv run black src/ --exclude=src/training_notebooks/
       
+      - name: Create required directories for testing
+        run: |
+          echo "Creating required directories that may be missing in CI..."
+          mkdir -p src/videos/input
+          mkdir -p src/videos/output  
+          mkdir -p src/stubs
+          echo "Created directories: src/videos/{input,output}, src/stubs"
+      
       - name: Run linting
         run: |
           uv run ruff check src/ --exclude=src/training_notebooks/
@@ -86,4 +94,9 @@ jobs:
           echo "   - Drawing Components (33 tests)"
           echo "   - Utility Functions (41 tests)"
           echo "   - Project Structure (25 tests)"
+          echo ""
+          echo "🏗️  CI Setup includes:"
+          echo "   - Automatic code formatting with Black"
+          echo "   - Directory structure creation for videos & stubs"
+          echo "   - Comprehensive linting and testing"
           echo "=================================="
