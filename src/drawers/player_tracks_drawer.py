@@ -17,7 +17,7 @@ class PlayerTracksDrawer:
     """
 
     DEFAULT_TEAM_1_COLOR: Tuple[int, int, int] = (255, 245, 238)
-    DEFAULT_TEAM_2_COLOR: Tuple[int, int, int] = (128, 0, 0)
+    DEFAULT_TEAM_2_COLOR: Tuple[int, int, int] = (128, 128, 0)
 
     def __init__(
         self,

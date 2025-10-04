@@ -1,6 +1,7 @@
 from utils import read_video, save_video
 from trackers import PlayerTracker, BallTracker
 from drawers import PlayerTracksDrawer, BallTracksDrawer
+from team_assigner import TeamAssigner
 
 import logging
 
@@ -25,6 +26,9 @@ def main():
     ball_stub_path = (
         "/home/elbahnasy/CodingWorkspace/BasketballVision/src/stubs/ball_track_stub.pkl"
     )
+    team_stub_path = (
+        "/home/elbahnasy/CodingWorkspace/BasketballVision/src/stubs/team_assignment_stub.pkl"
+    )
 
     # Load video frames
     logger.info("Loading video frames...")
@@ -44,10 +48,30 @@ def main():
     )
     logger.info("Player tracks processed.")
 
+    # Initialize team assigner and assign teams
+    logger.info("Initializing team assigner...")
+    team_assigner = TeamAssigner(
+        team_1_class_name="white shirt",  
+        team_2_class_name="blue shirt"
+    )
+    # Override device to CPU
+    team_assigner.device = "cpu"
+    logger.info("Team assigner initialized (forced CPU mode).")
+
+
+    logger.info("Assigning players to teams...")
+    team_assignments = team_assigner.get_player_team_across_frames(
+        video_frames=frames,
+        player_tracks=player_tracks,
+        read_from_stub=True,
+        stub_path=team_stub_path
+    )
+    logger.info("Team assignments completed.")
+
     # Get ball tracks with caching
     logger.info("Processing ball tracks...")
     ball_tracks = ball_tracker.get_object_tracks(
-        frames, read_from_stub=False, stub_path=ball_stub_path
+        frames, read_from_stub=True, stub_path=ball_stub_path
     )
     logger.info("Ball tracks processed.")
 
@@ -64,10 +88,12 @@ def main():
     ball_tracks_drawer = BallTracksDrawer()
     logger.info("Track drawers initialized.")
 
-    # Draw player tracks on frames
+    # Draw player tracks on frames with team assignments
     logger.info("Drawing player tracks on frames...")
     annotated_frames = player_tracks_drawer.draw_batch(
-        video_frames=frames, tracks_batch=player_tracks
+        video_frames=frames, 
+        tracks_batch=player_tracks,
+        player_assignment_batch=team_assignments  # Pass team assignments to drawer
     )
     logger.info("Player tracks drawn.")
 
@@ -86,3 +112,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
